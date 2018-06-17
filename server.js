@@ -1,19 +1,20 @@
 "use strict";
-
 // requirements
 const express    = require("express");
 const path       = require("path");
 const dotenv     = require("dotenv");
 const route      = require("./app/routes/index.js");
 const bodyParser = require("body-parser");
-
+const cors       = require('cors')
 
 // init environment
 dotenv.load();
 
-
 // init app
 const app = express();
+
+// Enable All CORS Requests
+app.use(cors());
 
 /** bodyParser.urlencoded(options)
  * Parses text as URL encoded data

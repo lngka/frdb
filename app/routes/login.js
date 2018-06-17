@@ -19,11 +19,10 @@ module.exports = function(app, db) {
             db.pseudoAuthenticate(loginData, function(err, loginID) {
                 res.setHeader("Content-Type", "application/json");
                 if (err) {
-                     res.status(500).send(JSON.stringify(err.message));
+                     res.status(err.code || 500).send(JSON.stringify(err.message));
                      return;
                 }
                 res.status(200).send(JSON.stringify(loginID));
             });
-            
         });
 };
