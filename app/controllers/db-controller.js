@@ -9,7 +9,12 @@ module.exports = function () {
       password : '',
       database : 'uni'
     });
-    connection.connect();
+    try {
+        connection.connect();
+    } catch (e) {
+        console.error(e);
+        process.exit();
+    }
     
     /*
     * 
@@ -22,11 +27,24 @@ module.exports = function () {
                 return callback(null, results);
         });
     };
+    
     /*
     * Gibt zulässige Aktionen zurück
     */
     this.getActions = function(callback) {
         connection.query("SELECT * FROM ws_aktion", function (error, results, fields) {
+            if (error) {
+                return callback(error);
+            }
+            return callback(null, results);
+        });
+    }
+    
+    /*
+    * Gibt ws_status zurück
+    */
+    this.getStatuses = function(callback) {
+        connection.query("SELECT * FROM ws_status", function (error, results, fields) {
             if (error) {
                 return callback(error);
             }
@@ -75,7 +93,7 @@ module.exports = function () {
             
             var tokens = new Array(recordIDS.length).fill('?').join(',');
             let sqlString = `
-                SELECT oi.Titel, o.Barcode, o.Image, o.KategorieID, o.StatusID, o.DatumGeändert 
+                SELECT oi.Titel, o.OrdnerID, o.Barcode, o.Image, o.KategorieID, o.StatusID, o.DatumGeändert 
                 FROM ws_ordner AS o
                 INNER JOIN ws_ordnerindex AS oi 
                 ON oi.OrdnerID=o.OrdnerID
@@ -202,9 +220,14 @@ module.exports = function () {
     */
     this.getOrdersByLoginID = function(loginID, callback) {
         let sqlString = `
-            SELECT OrdnerID, AktionID, Preis 
-            FROM ws_auftragordner
-            WHERE AuftragID IN (
+            SELECT ag.AuftragID, ag.OrdnerID, oi.Titel, ag.AktionID, o.StatusID, ag.Preis 
+            FROM ws_auftragordner AS ag
+            INNER JOIN ws_ordnerindex AS oi 
+            ON oi.OrdnerID=ag.OrdnerID
+            INNER JOIN ws_ordner AS o
+            ON o.OrdnerID=ag.OrdnerID
+            WHERE AuftragID 
+            IN (
                 SELECT AuftragID
                 FROM ws_auftrag
                 WHERE LoginID=${loginID}
@@ -274,6 +297,7 @@ function checkOrderData(orderData) {
             break;
         }
     }
+    // TODO: check ActionID against StatusID
     return validity;
 }
 
